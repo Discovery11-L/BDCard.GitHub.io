@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>电子名片</title>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,"Microsoft YaHei",sans-serif;}
+        body{background:#f2f5f9;padding:20px;max-width:950px;margin:0 auto;}
+        
+        .card-container{
+            position: relative;
+            width: 900px;
+            height: 500px;
+            background: white;
+            margin: 0 auto 20px;
+            border-radius:12px;
+            overflow:hidden;
+        }
+
+        .edit-mode .edit-area{display:block;}
+        .edit-mode .show-area{display:none;}
+        .show-mode .edit-area{display:none;}
+        .show-mode .show-area{display:block;}
+
+        .edit-area{width:100%;height:100%;position:relative;}
+
+        /* LOGO 宽度75px */
+        .logo-box{
+            position: absolute;
+            left: 18px;
+            top: 10px;
+            width: 75px;
+            height: 60px;
+            border-radius:6px;
+            border:1px dashed #ddd;
+            cursor:pointer;
+            overflow:hidden;
+            z-index:2;
+        }
+        .logo-box img{width:100%;height:100%;object-fit:cover;}
+        #logoFile{display:none;}
+
+        /* 头像框 - top调整为98px */
+        .avatar-box{
+            position: absolute;
+            left: 72px;
+            top: 98px; /* 核心调整：95px → 98px */
+            width: 215px;
+            height: 230px;
+            border-radius:6px;
+            border:1px solid #eee;
+            overflow:hidden;
+            cursor:pointer;
+            background:#f9f9f9;
+            z-index:2;
+        }
+        .avatar-box img{width:100%;height:100%;object-fit:cover;}
+        #avatarFile{display:none;}
+
+        /* 表单区域 - top调整为100px */
+        .info-side{
+            position: absolute;
+            left: 315px;
+            top: 100px; /* 核心调整：105px → 100px */
+            width: 540px;
+            height: 325px;
+            z-index:2;
+            display:flex;
+            flex-direction:column;
+            gap:15px;
+        }
+        .row{display:flex;align-items:center;font-size:20px;width:100%;}
+        .label{
+            width:100px;
+            color:#555;
+            font-weight:500;
+            flex-shrink:0;
+            font-size:22px;
+        }
+        .input{
+            flex:1;
+            border:none;
+            border-bottom:2px solid #f0f0f0;
+            padding:8px 5px;
+            outline:none;
+            font-size:20px;
+        }
+
+        /* 二维码（置顶）- chat文字容器缩为5x5px */
+        .qrcode-box{
+            position: absolute;
+            left: 768px;
+            top: 375px;
+            width: 110px;
+            height: 110px;
+            border:1px dashed #ddd;
+            border-radius:6px;
+            overflow:hidden;
+            cursor:pointer;
+            z-index:9;
+        }
+        .qrcode-box img{width:100%;height:100%;object-fit:cover;}
+        .qrcode-center-text{
+            position:absolute;
+            top:50%;left:50%;
+            transform:translate(-50%,-50%);
+            background:#fff;
+            padding:0; /* 移除内边距适配小尺寸 */
+            border-radius:2px; /* 适配小尺寸圆角 */
+            font-size:3px; /* 文字尺寸适配5x5容器 */
+            font-weight:bold;
+            color:#333;
+            pointer-events:none;
+            width:5px; /* 核心调整：缩为5px */
+            height:5px; /* 核心调整：缩为5px */
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            white-space:nowrap;
+        }
+        #qrcodeFile{display:none;}
+
+        /* 分割线 */
+        .divider{
+            position:absolute;
+            left:18px;
+            bottom:80px;
+            width:864px;
+            height:2px;
+            background:#1a7399;
+            box-shadow: 0 0 5px 2px rgba(26, 115, 153, 0.4);
+            z-index:1;
+        }
+
+        /* 地址框（二维码下层） */
+        .address-box{
+            position:absolute;
+            left: 18px;
+            bottom: 20px;
+            width: 864px;
+            height: 50px;
+            z-index:2;
+            display:flex;
+            align-items:center;
+        }
+        .address-input{
+            width:100%;
+            border:none;
+            border-bottom:2px solid #f0f0f0;
+            padding:8px 5px;
+            outline:none;
+            font-size:18px;
+        }
+
+        /* 展示模式样式 */
+        .show-area{width:100%;height:100%;position:relative;}
+        .show-logo{
+            position: absolute;
+            left: 18px;
+            top: 10px;
+            width: 75px;
+            height: 60px;
+            border-radius:6px;
+            overflow:hidden;
+            z-index:2;
+        }
+        .show-logo img{width:100%;height:100%;object-fit:cover;}
+
+        /* 展示模式头像 - 同步调整top为98px */
+        .show-avatar{
+            position: absolute;
+            left: 72px;
+            top: 98px; /* 核心调整：95px → 98px */
+            width: 215px;
+            height: 230px;
+            border-radius:6px;
+            overflow:hidden;
+            z-index:2;
+        }
+        .show-avatar img{width:100%;height:100%;object-fit:cover;}
+
+        /* 展示模式表单区域 - 同步调整top为100px */
+        .show-info{
+            position: absolute;
+            left: 315px;
+            top: 100px; /* 核心调整：105px → 100px */
+            width: 540px;
+            height: 325px;
+            z-index:2;
+            display:flex;
+            flex-direction:column;
+            gap:20px;
+            padding:10px;
+        }
+        .show-name{font-size:30px;font-weight:bold;color:#333;}
+        .show-company{font-size:24px;color:#555;}
+        .show-job{font-size:22px;color:#666;}
+        .show-phone-btn{
+            width:100%;
+            height:60px;
+            line-height:60px;
+            background:#26ae60;
+            color:#fff;
+            border:none;
+            border-radius:8px;
+            font-size:24px;
+            cursor:pointer;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:8px;
+            margin-top:10px;
+        }
+
+        /* 展示模式二维码 - chat文字容器同步缩为5x5px */
+        .show-qrcode{
+            position: absolute;
+            left: 768px;
+            top: 375px;
+            width: 110px;
+            height: 110px;
+            border-radius:6px;
+            overflow:hidden;
+            z-index:9;
+        }
+        .show-qrcode img{width:100%;height:100%;object-fit:cover;}
+        .show-qrcode-text{
+            position:absolute;
+            top:50%;left:50%;
+            transform:translate(-50%,-50%);
+            background:#fff;
+            padding:0; /* 移除内边距 */
+            border-radius:2px;
+            font-size:3px; /* 适配5x5容器 */
+            font-weight:bold;
+            color:#333;
+            pointer-events:none;
+            width:5px; /* 核心调整：缩为5px */
+            height:5px; /* 核心调整：缩为5px */
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            white-space:nowrap;
+        }
+
+        .show-divider{
+            position:absolute;
+            left:18px;
+            bottom:80px;
+            width:864px;
+            height:2px;
+            background:#1a7399;
+            box-shadow: 0 0 5px 2px rgba(26, 115, 153, 0.4);
+            z-index:1;
+        }
+
+        .show-address{
+            position:absolute;
+            left: 18px;
+            bottom: 20px;
+            width: 864px;
+            height: 50px;
+            line-height: 50px;
+            font-size: 18px;
+            color: #666;
+            padding: 0 5px;
+            z-index:2;
+        }
+
+        /* 号码设置区 */
+        .phone-set{
+            margin-top:20px;
+            padding:20px;
+            border:1px solid #eee;
+            border-radius:10px;
+            width:900px;
+            margin:0 auto 20px;
+            font-size:18px;
+        }
+        .check-row{
+            display:flex;align-items:center;gap:10px;margin-top:10px;font-size:18px;
+        }
+        #showVirtualCheck{width:20px;height:20px;}
+        
+        /* 备注区 */
+        .remark-box{
+            width:900px;
+            margin:0 auto 20px;
+        }
+        .remark-input{
+            width:100%;
+            min-height:80px;
+            border-radius:8px;
+            padding:15px;
+            border:1px solid #eee;
+            outline:none;
+            font-size:18px;
+        }
+        
+        /* 按钮区 */
+        .btn-row{
+            display:flex;gap:15px;width:900px;margin:0 auto;
+        }
+        .btn-call, .btn-ok, .btn-back{
+            flex:1;height:70px;border:none;border-radius:10px;color:#fff;font-size:22px;cursor:pointer;
+        }
+        .btn-call{background:#26ae60;}
+        .btn-ok{background:#5b7dff;}
+        .btn-back{background:#999;display:none;}
+        .show-mode .btn-back{display:block;}
+        .show-mode .btn-call{display:none;}
+    </style>
+</head>
+<body>
+
+<div class="card-container edit-mode" id="cardContainer">
+    <div class="edit-area">
+        <!-- LOGO上传（无预设图片） -->
+        <div class="logo-box" id="logoBox">
+            <img id="logoImg" alt="LOGO">
+        </div>
+        <input type="file" id="logoFile" accept="image/*">
+
+        <!-- 头像上传（无预设图片） -->
+        <div class="avatar-box" id="avatarBox">
+            <img id="avatarImg" alt="一寸头像">
+        </div>
+        <input type="file" id="avatarFile" accept="image/*">
+
+        <!-- 基础信息表单（无预填内容） -->
+        <div class="info-side">
+            <div class="row">
+                <div class="label">姓名</div>
+                <input type="text" class="input data-item" id="name" placeholder="请输入">
+            </div>
+            <div class="row">
+                <div class="label">公司</div>
+                <input type="text" class="input data-item" id="company" placeholder="请输入">
+            </div>
+            <div class="row">
+                <div class="label">职位</div>
+                <input type="text" class="input data-item" id="job" placeholder="请输入">
+            </div>
+            <div class="row">
+                <div class="label">电话</div>
+                <input type="text" class="input show-phone" readonly placeholder="未设置">
+            </div>
+        </div>
+
+        <!-- 二维码上传（无预设图片） -->
+        <div class="qrcode-box" id="qrcodeBox">
+            <img id="qrcodeImg" alt="微信二维码">
+            <div class="qrcode-center-text">chat</div>
+        </div>
+        <input type="file" id="qrcodeFile" accept="image/*">
+
+        <!-- 分割线 + 地址（无预填） -->
+        <div class="divider"></div>
+        <div class="address-box">
+            <input type="text" class="address-input data-item" id="address" placeholder="请输入地址">
+        </div>
+    </div>
+
+    <!-- 展示模式 -->
+    <div class="show-area">
+        <div class="show-logo" id="showLogo">
+            <img id="showLogoImg" alt="LOGO">
+        </div>
+        <div class="show-avatar" id="showAvatar">
+            <img id="showAvatarImg" alt="一寸头像">
+        </div>
+        <div class="show-info">
+            <div class="show-name" id="showName">-</div>
+            <div class="show-company" id="showCompany">-</div>
+            <div class="show-job" id="showJob">-</div>
+            <button class="show-phone-btn" id="showPhoneBtn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                </svg>
+                <span id="showPhoneText">点击拨号</span>
+            </button>
+        </div>
+        <div class="show-qrcode" id="showQrcode">
+            <img id="showQrcodeImg" alt="微信二维码">
+            <div class="show-qrcode-text">chat</div>
+        </div>
+        <div class="show-divider"></div>
+        <div class="show-address" id="showAddress">-</div>
+    </div>
+</div>
+
+<!-- 号码设置（无预填） -->
+<div class="phone-set edit-area" id="phoneSet">
+    <div class="row">
+        <div class="label">真实号</div>
+        <input type="tel" class="input data-item" id="realPhone" placeholder="拨号用">
+    </div>
+    <div class="row">
+        <div class="label">虚拟号</div>
+        <input type="text" class="input data-item" id="virtualPhone" placeholder="展示用">
+    </div>
+    <div class="check-row">
+        <input type="checkbox" id="showVirtualCheck" class="data-item">
+        <label>对外显示虚拟号码</label>
+    </div>
+</div>
+
+<!-- 备注（无预填） -->
+<div class="remark-box edit-area">
+    <textarea class="remark-input data-item" id="remark" placeholder="备注说明"></textarea>
+</div>
+
+<!-- 操作按钮 -->
+<div class="btn-row">
+    <button class="btn-call" id="callBtn">电话联系</button>
+    <button class="btn-ok" id="saveBtn">完成</button>
+    <button class="btn-back" id="backBtn">返回编辑</button>
+</div>
+
+<script>
+// 极简存储/读取函数（移除所有冗余兼容）
+function saveData(key, value) {
+    sessionStorage.setItem('card_' + key, value);
+    localStorage.setItem('card_' + key, value);
+}
+
+function loadData(key) {
+    return sessionStorage.getItem('card_' + key) || localStorage.getItem('card_' + key) || '';
+}
+
+// 通用图片上传函数（合并重复逻辑，无预设图片）
+function initImageUpload(triggerId, fileId, previewId, showPreviewId, dataKey) {
+    const trigger = document.getElementById(triggerId);
+    const fileInput = document.getElementById(fileId);
+    const preview = document.getElementById(previewId);
+    const showPreview = document.getElementById(showPreviewId);
+
+    trigger.onclick = () => fileInput.click();
+    fileInput.onchange = e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+            preview.src = ev.target.result;
+            showPreview.src = ev.target.result;
+            saveData(dataKey, ev.target.result);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    // 加载存储的图片（无预设则为空）
+    const savedData = loadData(dataKey);
+    if (savedData) {
+        preview.src = savedData;
+        showPreview.src = savedData;
+    }
+}
+
+// 初始化图片上传
+initImageUpload('logoBox', 'logoFile', 'logoImg', 'showLogoImg', 'logo');
+initImageUpload('avatarBox', 'avatarFile', 'avatarImg', 'showAvatarImg', 'avatar');
+initImageUpload('qrcodeBox', 'qrcodeFile', 'qrcodeImg', 'showQrcodeImg', 'qrcode');
+
+// 号码逻辑（无预设值）
+const realPhone = document.getElementById('realPhone');
+const virtualPhone = document.getElementById('virtualPhone');
+const showVirtualCheck = document.getElementById('showVirtualCheck');
+const showPhone = document.querySelector('.show-phone');
+const showPhoneText = document.getElementById('showPhoneText');
+const showPhoneBtn = document.getElementById('showPhoneBtn');
+
+function updatePhone() {
+    const showVal = showVirtualCheck.checked ? virtualPhone.value : realPhone.value;
+    showPhone.value = showVal || '未设置';
+    showPhoneText.textContent = showVal || '点击设置号码';
+    showPhoneBtn.disabled = !realPhone.value.trim();
+}
+
+[realPhone, virtualPhone].forEach(input => input.oninput = updatePhone);
+showVirtualCheck.onchange = updatePhone;
+
+// 表单数据处理（无预填）
+const inputs = document.querySelectorAll('.data-item');
+const showElements = {
+    name: document.getElementById('showName'),
+    company: document.getElementById('showCompany'),
+    job: document.getElementById('showJob'),
+    address: document.getElementById('showAddress')
+};
+
+inputs.forEach(input => {
+    const key = input.id;
+    const savedValue = loadData(key);
+    
+    // 初始化值（无预设）
+    if (input.type === 'checkbox') {
+        input.checked = savedValue === 'true';
+    } else {
+        input.value = savedValue;
+    }
+
+    // 绑定输入事件
+    input.oninput = input.onchange = () => {
+        const value = input.type === 'checkbox' ? input.checked : input.value;
+        saveData(key, value);
+        updatePhone();
+        if (showElements[key]) {
+            showElements[key].textContent = value || '-';
+        }
+    };
+
+    // 初始化展示区
+    if (showElements[key]) {
+        showElements[key].textContent = savedValue || '-';
+    }
+});
+
+updatePhone();
+
+// 拨号功能
+function callRealPhone() {
+    const phone = realPhone.value.trim();
+    if (!phone) {
+        alert('请先填写真实手机号码！');
+        return;
+    }
+    if (confirm(`是否拨打：${phone}？`)) {
+        location.href = `tel:${phone}`;
+    }
+}
+document.getElementById('callBtn').onclick = callRealPhone;
+showPhoneBtn.onclick = callRealPhone;
+
+// 模式切换 + 截图下载（精简逻辑）
+const cardContainer = document.getElementById('cardContainer');
+const saveBtn = document.getElementById('saveBtn');
+const backBtn = document.getElementById('backBtn');
+
+saveBtn.onclick = async () => {
+    // 更新展示区数据
+    Object.keys(showElements).forEach(key => {
+        showElements[key].textContent = document.getElementById(key).value || '-';
+    });
+
+    // 切换模式
+    cardContainer.classList.remove('edit-mode');
+    cardContainer.classList.add('show-mode');
+    
+    // 生成截图
+    saveBtn.innerText = '生成中...';
+    saveBtn.disabled = true;
+    try {
+        const canvas = await html2canvas(document.querySelector('.show-area'), {
+            scale: 2, useCORS: true, backgroundColor: '#fff'
+        });
+        const a = document.createElement('a');
+        a.download = '900×500px电子名片.png';
+        a.href = canvas.toDataURL('image/png');
+        a.click();
+    } catch (e) {
+        alert('截图生成失败，请重试！');
+    }
+    saveBtn.innerText = '完成';
+    saveBtn.disabled = false;
+};
+
+backBtn.onclick = () => {
+    cardContainer.classList.remove('show-mode');
+    cardContainer.classList.add('edit-mode');
+};
+</script>
+</body>
+</html>
