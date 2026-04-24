@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>电子名片</title>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <title>在线电子名片</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,"Microsoft YaHei",sans-serif;}
-        body{background:#f2f5f9;padding:20px;max-width:950px;margin:0 auto;}
+        body{background:#f2f5f9;padding:20px;max-width:850px;margin:0 auto;}
         
+        /* 名片主体容器 - 宽度调整为800px */
         .card-container{
             position: relative;
-            width: 900px;
+            width: 800px;
             height: 500px;
             background: white;
             margin: 0 auto 20px;
@@ -19,11 +19,15 @@
             overflow:hidden;
         }
 
+        /* 模式控制 */
         .edit-mode .edit-area{display:block;}
         .edit-mode .show-area{display:none;}
         .show-mode .edit-area{display:none;}
         .show-mode .show-area{display:block;}
+        .final-mode .card-footer{display:none;}
+        .final-mode .back-btn{display:none;}
 
+        /* 名片编辑区 */
         .edit-area{width:100%;height:100%;position:relative;}
 
         /* LOGO 宽度75px */
@@ -42,12 +46,12 @@
         .logo-box img{width:100%;height:100%;object-fit:cover;}
         #logoFile{display:none;}
 
-        /* 头像框 - top调整为98px */
+        /* 头像框 - 宽度200px */
         .avatar-box{
             position: absolute;
             left: 72px;
-            top: 98px; /* 核心调整：95px → 98px */
-            width: 215px;
+            top: 98px;
+            width: 200px;
             height: 230px;
             border-radius:6px;
             border:1px solid #eee;
@@ -59,12 +63,12 @@
         .avatar-box img{width:100%;height:100%;object-fit:cover;}
         #avatarFile{display:none;}
 
-        /* 表单区域 - top调整为100px */
+        /* 表单区域 - 适配800px容器 */
         .info-side{
             position: absolute;
             left: 315px;
-            top: 100px; /* 核心调整：105px → 100px */
-            width: 540px;
+            top: 100px;
+            width: 440px; /* 原540px → 440px，适配800px容器 */
             height: 325px;
             z-index:2;
             display:flex;
@@ -88,10 +92,10 @@
             font-size:20px;
         }
 
-        /* 二维码（置顶）- chat文字容器缩为5x5px */
+        /* 二维码 - 适配800px容器 */
         .qrcode-box{
             position: absolute;
-            left: 768px;
+            left: 674px; /* 原774px → 674px，适配800px容器 */
             top: 375px;
             width: 110px;
             height: 110px;
@@ -107,39 +111,38 @@
             top:50%;left:50%;
             transform:translate(-50%,-50%);
             background:#fff;
-            padding:0; /* 移除内边距适配小尺寸 */
-            border-radius:2px; /* 适配小尺寸圆角 */
-            font-size:3px; /* 文字尺寸适配5x5容器 */
+            padding:0;
+            border-radius:2px;
+            font-size:3px;
             font-weight:bold;
             color:#333;
             pointer-events:none;
-            width:5px; /* 核心调整：缩为5px */
-            height:5px; /* 核心调整：缩为5px */
+            width:5px;
+            height:5px;
             display:flex;
             align-items:center;
             justify-content:center;
-            white-space:nowrap;
         }
         #qrcodeFile{display:none;}
 
-        /* 分割线 */
+        /* 分割线 - 适配800px容器 */
         .divider{
             position:absolute;
             left:18px;
             bottom:80px;
-            width:864px;
+            width:764px; /* 原864px → 764px，适配800px容器 */
             height:2px;
             background:#1a7399;
             box-shadow: 0 0 5px 2px rgba(26, 115, 153, 0.4);
             z-index:1;
         }
 
-        /* 地址框（二维码下层） */
+        /* 地址框 - 适配800px容器 */
         .address-box{
             position:absolute;
             left: 18px;
             bottom: 20px;
-            width: 864px;
+            width: 764px; /* 原864px → 764px，适配800px容器 */
             height: 50px;
             z-index:2;
             display:flex;
@@ -168,12 +171,12 @@
         }
         .show-logo img{width:100%;height:100%;object-fit:cover;}
 
-        /* 展示模式头像 - 同步调整top为98px */
+        /* 展示模式头像框 */
         .show-avatar{
             position: absolute;
             left: 72px;
-            top: 98px; /* 核心调整：95px → 98px */
-            width: 215px;
+            top: 98px;
+            width: 200px;
             height: 230px;
             border-radius:6px;
             overflow:hidden;
@@ -181,12 +184,12 @@
         }
         .show-avatar img{width:100%;height:100%;object-fit:cover;}
 
-        /* 展示模式表单区域 - 同步调整top为100px */
+        /* 展示区信息 - 适配800px容器 */
         .show-info{
             position: absolute;
             left: 315px;
-            top: 100px; /* 核心调整：105px → 100px */
-            width: 540px;
+            top: 100px;
+            width: 440px; /* 原540px → 440px */
             height: 325px;
             z-index:2;
             display:flex;
@@ -197,13 +200,16 @@
         .show-name{font-size:30px;font-weight:bold;color:#333;}
         .show-company{font-size:24px;color:#555;}
         .show-job{font-size:22px;color:#666;}
+        
+        /* 电话按钮 - 边框色改为#1a7399 */
         .show-phone-btn{
             width:100%;
             height:60px;
             line-height:60px;
-            background:#26ae60;
-            color:#fff;
-            border:none;
+            background: transparent;
+            color:#1a7399; /* 文字色同步匹配边框 */
+            border: 3px solid #1a7399; /* 核心调整：边框色改为#1a7399 */
+            box-shadow: 0 0 8px 2px rgba(26, 115, 153, 0.5); /* 阴影色匹配 */
             border-radius:8px;
             font-size:24px;
             cursor:pointer;
@@ -212,12 +218,22 @@
             justify-content:center;
             gap:8px;
             margin-top:10px;
+            transition: all 0.3s ease;
+        }
+        .show-phone-btn:hover{
+            box-shadow: 0 0 12px 4px rgba(26, 115, 153, 0.7); /* hover阴影色匹配 */
+        }
+        .show-phone-btn:disabled{
+            border-color:#ccc;
+            color:#ccc;
+            box-shadow:none;
+            cursor:not-allowed;
         }
 
-        /* 展示模式二维码 - chat文字容器同步缩为5x5px */
+        /* 展示区二维码 - 适配800px容器 */
         .show-qrcode{
             position: absolute;
-            left: 768px;
+            left: 674px; /* 原774px → 674px */
             top: 375px;
             width: 110px;
             height: 110px;
@@ -231,36 +247,37 @@
             top:50%;left:50%;
             transform:translate(-50%,-50%);
             background:#fff;
-            padding:0; /* 移除内边距 */
+            padding:0;
             border-radius:2px;
-            font-size:3px; /* 适配5x5容器 */
+            font-size:3px;
             font-weight:bold;
             color:#333;
             pointer-events:none;
-            width:5px; /* 核心调整：缩为5px */
-            height:5px; /* 核心调整：缩为5px */
+            width:5px;
+            height:5px;
             display:flex;
             align-items:center;
             justify-content:center;
-            white-space:nowrap;
         }
 
+        /* 展示区分割线 - 适配800px容器 */
         .show-divider{
             position:absolute;
             left:18px;
             bottom:80px;
-            width:864px;
+            width:764px; /* 原864px → 764px */
             height:2px;
             background:#1a7399;
             box-shadow: 0 0 5px 2px rgba(26, 115, 153, 0.4);
             z-index:1;
         }
 
+        /* 展示区地址 - 适配800px容器 */
         .show-address{
             position:absolute;
             left: 18px;
             bottom: 20px;
-            width: 864px;
+            width: 764px; /* 原864px → 764px */
             height: 50px;
             line-height: 50px;
             font-size: 18px;
@@ -269,14 +286,15 @@
             z-index:2;
         }
 
-        /* 号码设置区 */
+        /* 下方配置区 - 适配800px容器 */
+        .phone-set, .remark-box, .btn-row{
+            width:800px;
+            margin:0 auto 20px;
+        }
         .phone-set{
-            margin-top:20px;
             padding:20px;
             border:1px solid #eee;
             border-radius:10px;
-            width:900px;
-            margin:0 auto 20px;
             font-size:18px;
         }
         .check-row{
@@ -284,11 +302,6 @@
         }
         #showVirtualCheck{width:20px;height:20px;}
         
-        /* 备注区 */
-        .remark-box{
-            width:900px;
-            margin:0 auto 20px;
-        }
         .remark-input{
             width:100%;
             min-height:80px;
@@ -299,9 +312,8 @@
             font-size:18px;
         }
         
-        /* 按钮区 */
         .btn-row{
-            display:flex;gap:15px;width:900px;margin:0 auto;
+            display:flex;gap:15px;
         }
         .btn-call, .btn-ok, .btn-back{
             flex:1;height:70px;border:none;border-radius:10px;color:#fff;font-size:22px;cursor:pointer;
@@ -310,26 +322,27 @@
         .btn-ok{background:#5b7dff;}
         .btn-back{background:#999;display:none;}
         .show-mode .btn-back{display:block;}
-        .show-mode .btn-call{display:none;}
     </style>
 </head>
 <body>
 
+<!-- 名片主体 -->
 <div class="card-container edit-mode" id="cardContainer">
+    <!-- 编辑模式 -->
     <div class="edit-area">
-        <!-- LOGO上传（无预设图片） -->
+        <!-- LOGO上传 -->
         <div class="logo-box" id="logoBox">
             <img id="logoImg" alt="LOGO">
         </div>
         <input type="file" id="logoFile" accept="image/*">
 
-        <!-- 头像上传（无预设图片） -->
+        <!-- 头像上传 -->
         <div class="avatar-box" id="avatarBox">
             <img id="avatarImg" alt="一寸头像">
         </div>
         <input type="file" id="avatarFile" accept="image/*">
 
-        <!-- 基础信息表单（无预填内容） -->
+        <!-- 基础信息表单 -->
         <div class="info-side">
             <div class="row">
                 <div class="label">姓名</div>
@@ -337,7 +350,7 @@
             </div>
             <div class="row">
                 <div class="label">公司</div>
-                <input type="text" class="input data-item" id="company" placeholder="请输入">
+                <input type="text" class="input data-item" id="company" placeholder="请输入" value="勒序">
             </div>
             <div class="row">
                 <div class="label">职位</div>
@@ -349,14 +362,14 @@
             </div>
         </div>
 
-        <!-- 二维码上传（无预设图片） -->
+        <!-- 二维码上传 -->
         <div class="qrcode-box" id="qrcodeBox">
             <img id="qrcodeImg" alt="微信二维码">
             <div class="qrcode-center-text">chat</div>
         </div>
         <input type="file" id="qrcodeFile" accept="image/*">
 
-        <!-- 分割线 + 地址（无预填） -->
+        <!-- 分割线 + 地址 -->
         <div class="divider"></div>
         <div class="address-box">
             <input type="text" class="address-input data-item" id="address" placeholder="请输入地址">
@@ -373,8 +386,9 @@
         </div>
         <div class="show-info">
             <div class="show-name" id="showName">-</div>
-            <div class="show-company" id="showCompany">-</div>
+            <div class="show-company" id="showCompany">勒序</div>
             <div class="show-job" id="showJob">-</div>
+            <!-- 电话按钮 -->
             <button class="show-phone-btn" id="showPhoneBtn">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
@@ -391,36 +405,39 @@
     </div>
 </div>
 
-<!-- 号码设置（无预填） -->
-<div class="phone-set edit-area" id="phoneSet">
-    <div class="row">
-        <div class="label">真实号</div>
-        <input type="tel" class="input data-item" id="realPhone" placeholder="拨号用">
+<!-- 下方配置区 -->
+<div class="card-footer">
+    <!-- 号码设置区 -->
+    <div class="phone-set" id="phoneSet">
+        <div class="row">
+            <div class="label">真实号</div>
+            <input type="tel" class="input data-item" id="realPhone" placeholder="拨号用">
+        </div>
+        <div class="row">
+            <div class="label">虚拟号</div>
+            <input type="text" class="input data-item" id="virtualPhone" placeholder="展示用">
+        </div>
+        <div class="check-row">
+            <input type="checkbox" id="showVirtualCheck" class="data-item">
+            <label>对外显示虚拟号码</label>
+        </div>
     </div>
-    <div class="row">
-        <div class="label">虚拟号</div>
-        <input type="text" class="input data-item" id="virtualPhone" placeholder="展示用">
-    </div>
-    <div class="check-row">
-        <input type="checkbox" id="showVirtualCheck" class="data-item">
-        <label>对外显示虚拟号码</label>
-    </div>
-</div>
 
-<!-- 备注（无预填） -->
-<div class="remark-box edit-area">
-    <textarea class="remark-input data-item" id="remark" placeholder="备注说明"></textarea>
-</div>
+    <!-- 备注区 -->
+    <div class="remark-box" id="remarkBox">
+        <textarea class="remark-input data-item" id="remark" placeholder="备注说明"></textarea>
+    </div>
 
-<!-- 操作按钮 -->
-<div class="btn-row">
-    <button class="btn-call" id="callBtn">电话联系</button>
-    <button class="btn-ok" id="saveBtn">完成</button>
-    <button class="btn-back" id="backBtn">返回编辑</button>
+    <!-- 按钮区 -->
+    <div class="btn-row" id="btnRow">
+        <button class="btn-call" id="callBtn">电话联系</button>
+        <button class="btn-ok" id="saveBtn">完成</button>
+        <button class="btn-back" id="backBtn">返回编辑</button>
+    </div>
 </div>
 
 <script>
-// 极简存储/读取函数（移除所有冗余兼容）
+// 存储/读取函数
 function saveData(key, value) {
     sessionStorage.setItem('card_' + key, value);
     localStorage.setItem('card_' + key, value);
@@ -430,7 +447,7 @@ function loadData(key) {
     return sessionStorage.getItem('card_' + key) || localStorage.getItem('card_' + key) || '';
 }
 
-// 通用图片上传函数（合并重复逻辑，无预设图片）
+// 通用图片上传初始化
 function initImageUpload(triggerId, fileId, previewId, showPreviewId, dataKey) {
     const trigger = document.getElementById(triggerId);
     const fileInput = document.getElementById(fileId);
@@ -450,7 +467,7 @@ function initImageUpload(triggerId, fileId, previewId, showPreviewId, dataKey) {
         reader.readAsDataURL(file);
     };
 
-    // 加载存储的图片（无预设则为空）
+    // 加载存储的图片
     const savedData = loadData(dataKey);
     if (savedData) {
         preview.src = savedData;
@@ -463,7 +480,7 @@ initImageUpload('logoBox', 'logoFile', 'logoImg', 'showLogoImg', 'logo');
 initImageUpload('avatarBox', 'avatarFile', 'avatarImg', 'showAvatarImg', 'avatar');
 initImageUpload('qrcodeBox', 'qrcodeFile', 'qrcodeImg', 'showQrcodeImg', 'qrcode');
 
-// 号码逻辑（无预设值）
+// 号码逻辑处理
 const realPhone = document.getElementById('realPhone');
 const virtualPhone = document.getElementById('virtualPhone');
 const showVirtualCheck = document.getElementById('showVirtualCheck');
@@ -476,12 +493,14 @@ function updatePhone() {
     showPhone.value = showVal || '未设置';
     showPhoneText.textContent = showVal || '点击设置号码';
     showPhoneBtn.disabled = !realPhone.value.trim();
+    showPhoneBtn.setAttribute('data-phone', realPhone.value.trim() || '');
 }
 
+// 绑定号码输入事件
 [realPhone, virtualPhone].forEach(input => input.oninput = updatePhone);
 showVirtualCheck.onchange = updatePhone;
 
-// 表单数据处理（无预填）
+// 表单数据处理
 const inputs = document.querySelectorAll('.data-item');
 const showElements = {
     name: document.getElementById('showName'),
@@ -490,15 +509,17 @@ const showElements = {
     address: document.getElementById('showAddress')
 };
 
+// 初始化表单数据
 inputs.forEach(input => {
     const key = input.id;
     const savedValue = loadData(key);
     
-    // 初始化值（无预设）
     if (input.type === 'checkbox') {
         input.checked = savedValue === 'true';
     } else {
-        input.value = savedValue;
+        // 公司字段默认值
+        input.value = key === 'company' && !savedValue ? '勒序' : savedValue;
+        if (key === 'company' && !savedValue) saveData(key, '勒序');
     }
 
     // 绑定输入事件
@@ -506,70 +527,71 @@ inputs.forEach(input => {
         const value = input.type === 'checkbox' ? input.checked : input.value;
         saveData(key, value);
         updatePhone();
-        if (showElements[key]) {
-            showElements[key].textContent = value || '-';
-        }
+        if (showElements[key]) showElements[key].textContent = value || '-';
     };
 
     // 初始化展示区
     if (showElements[key]) {
-        showElements[key].textContent = savedValue || '-';
+        showElements[key].textContent = key === 'company' && !savedValue ? '勒序' : (savedValue || '-');
     }
 });
 
+// 初始化号码显示
 updatePhone();
 
 // 拨号功能
 function callRealPhone() {
-    const phone = realPhone.value.trim();
+    const phone = realPhone.value.trim() || showPhoneBtn.getAttribute('data-phone');
     if (!phone) {
         alert('请先填写真实手机号码！');
         return;
     }
-    if (confirm(`是否拨打：${phone}？`)) {
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
         location.href = `tel:${phone}`;
+    } else {
+        if (confirm(`是否拨打：${phone}？\n（桌面端可手动拨打）`)) {
+            navigator.clipboard.writeText(phone).then(() => alert(`号码已复制：${phone}`));
+        }
     }
 }
 document.getElementById('callBtn').onclick = callRealPhone;
 showPhoneBtn.onclick = callRealPhone;
 
-// 模式切换 + 截图下载（精简逻辑）
+// 模式切换逻辑
 const cardContainer = document.getElementById('cardContainer');
 const saveBtn = document.getElementById('saveBtn');
 const backBtn = document.getElementById('backBtn');
+let isFirstConfirm = true;
 
-saveBtn.onclick = async () => {
+// 切换到展示模式
+function switchToShowMode() {
     // 更新展示区数据
     Object.keys(showElements).forEach(key => {
         showElements[key].textContent = document.getElementById(key).value || '-';
     });
-
-    // 切换模式
     cardContainer.classList.remove('edit-mode');
     cardContainer.classList.add('show-mode');
     
-    // 生成截图
-    saveBtn.innerText = '生成中...';
-    saveBtn.disabled = true;
-    try {
-        const canvas = await html2canvas(document.querySelector('.show-area'), {
-            scale: 2, useCORS: true, backgroundColor: '#fff'
-        });
-        const a = document.createElement('a');
-        a.download = '900×500px电子名片.png';
-        a.href = canvas.toDataURL('image/png');
-        a.click();
-    } catch (e) {
-        alert('截图生成失败，请重试！');
+    if (isFirstConfirm) {
+        saveBtn.innerText = '再次确认';
+        isFirstConfirm = false;
+    } else {
+        saveBtn.innerText = '已完成';
+        saveBtn.disabled = true;
+        cardContainer.classList.add('final-mode');
+        document.querySelector('.card-footer').remove();
     }
-    saveBtn.innerText = '完成';
-    saveBtn.disabled = false;
-};
+}
 
-backBtn.onclick = () => {
+// 返回编辑模式
+function switchToEditMode() {
     cardContainer.classList.remove('show-mode');
     cardContainer.classList.add('edit-mode');
-};
+}
+
+// 绑定按钮事件
+saveBtn.onclick = switchToShowMode;
+backBtn.onclick = switchToEditMode;
 </script>
 </body>
 </html>
