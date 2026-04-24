@@ -3,433 +3,239 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>在线电子名片</title>
+    <title>勒序 电子名片</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,"Microsoft YaHei",sans-serif;}
         body{background:#f2f5f9;padding:20px;max-width:850px;margin:0 auto;}
-        
-        /* 名片主体容器 - 宽度调整为800px */
+
+        /* 名片主体 800px */
         .card-container{
             position: relative;
             width: 800px;
             height: 500px;
-            background: white;
+            background: #fff;
             margin: 0 auto 20px;
             border-radius:12px;
             overflow:hidden;
         }
 
-        /* 模式控制 */
         .edit-mode .edit-area{display:block;}
         .edit-mode .show-area{display:none;}
         .show-mode .edit-area{display:none;}
         .show-mode .show-area{display:block;}
-        .final-mode .card-footer{display:none;}
-        .final-mode .back-btn{display:none;}
+        .final-mode .card-footer{display:none !important;}
+        .final-mode .back-btn{display:none !important;}
+        /* 最终只读：全部输入框禁用 + 禁止点击上传 */
+        .final-mode input,
+        .final-mode textarea,
+        .final-mode .logo-box,
+        .final-mode .avatar-box,
+        .final-mode .qrcode-box{
+            pointer-events: none !important;
+            user-select: none !important;
+            background: transparent !important;
+            border: none !important;
+            color: #333 !important;
+            cursor: default !important;
+        }
 
-        /* 名片编辑区 */
+        /* 编辑区通用 */
         .edit-area{width:100%;height:100%;position:relative;}
-
-        /* LOGO 宽度75px */
         .logo-box{
-            position: absolute;
-            left: 18px;
-            top: 10px;
-            width: 75px;
-            height: 60px;
-            border-radius:6px;
-            border:1px dashed #ddd;
-            cursor:pointer;
-            overflow:hidden;
-            z-index:2;
+            position: absolute;left: 18px;top: 10px;
+            width: 75px;height: 60px;
+            border-radius:6px;border:1px dashed #ddd;
+            cursor:pointer;overflow:hidden;z-index:2;
         }
         .logo-box img{width:100%;height:100%;object-fit:cover;}
-        #logoFile{display:none;}
+        #logoFile,#avatarFile,#qrcodeFile{display:none;}
 
-        /* 头像框 - 宽度200px */
+        /* 头像框 固定200px */
         .avatar-box{
-            position: absolute;
-            left: 72px;
-            top: 98px;
-            width: 200px;
-            height: 230px;
-            border-radius:6px;
-            border:1px solid #eee;
-            overflow:hidden;
-            cursor:pointer;
-            background:#f9f9f9;
-            z-index:2;
+            position: absolute;left: 72px;top: 98px;
+            width: 200px;height: 230px;
+            border-radius:6px;border:1px solid #eee;
+            overflow:hidden;cursor:pointer;background:#f9f9f9;z-index:2;
         }
         .avatar-box img{width:100%;height:100%;object-fit:cover;}
-        #avatarFile{display:none;}
 
-        /* 表单区域 - 适配800px容器 */
         .info-side{
-            position: absolute;
-            left: 315px;
-            top: 100px;
-            width: 440px; /* 原540px → 440px，适配800px容器 */
-            height: 325px;
-            z-index:2;
-            display:flex;
-            flex-direction:column;
-            gap:15px;
+            position: absolute;left: 315px;top: 100px;
+            width: 440px;height: 325px;
+            z-index:2;display:flex;flex-direction:column;gap:15px;
         }
-        .row{display:flex;align-items:center;font-size:20px;width:100%;}
-        .label{
-            width:100px;
-            color:#555;
-            font-weight:500;
-            flex-shrink:0;
-            font-size:22px;
-        }
+        .row{display:flex;align-items:center;width:100%;}
+        .label{width:100px;color:#555;font-weight:500;flex-shrink:0;font-size:22px;}
         .input{
-            flex:1;
-            border:none;
-            border-bottom:2px solid #f0f0f0;
-            padding:8px 5px;
-            outline:none;
-            font-size:20px;
+            flex:1;border:none;border-bottom:2px solid #f0f0f0;
+            padding:8px 5px;outline:none;font-size:22px;
         }
 
-        /* 二维码 - 适配800px容器 */
         .qrcode-box{
-            position: absolute;
-            left: 674px; /* 原774px → 674px，适配800px容器 */
-            top: 375px;
-            width: 110px;
-            height: 110px;
-            border:1px dashed #ddd;
-            border-radius:6px;
-            overflow:hidden;
-            cursor:pointer;
-            z-index:9;
+            position: absolute;left: 674px;top: 375px;
+            width: 110px;height: 110px;
+            border:1px dashed #ddd;border-radius:6px;
+            overflow:hidden;cursor:pointer;z-index:9;
         }
         .qrcode-box img{width:100%;height:100%;object-fit:cover;}
         .qrcode-center-text{
-            position:absolute;
-            top:50%;left:50%;
-            transform:translate(-50%,-50%);
-            background:#fff;
-            padding:0;
-            border-radius:2px;
-            font-size:3px;
-            font-weight:bold;
-            color:#333;
-            pointer-events:none;
-            width:5px;
-            height:5px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
+            position:absolute;top:50%;left:50%;
+            transform:translate(-50%,-50%);background:#fff;
+            font-size:3px;font-weight:bold;color:#333;
+            width:5px;height:5px;display:flex;align-items:center;justify-content:center;
         }
-        #qrcodeFile{display:none;}
 
-        /* 分割线 - 适配800px容器 */
         .divider{
-            position:absolute;
-            left:18px;
-            bottom:80px;
-            width:764px; /* 原864px → 764px，适配800px容器 */
-            height:2px;
-            background:#1a7399;
-            box-shadow: 0 0 5px 2px rgba(26, 115, 153, 0.4);
-            z-index:1;
+            position:absolute;left:18px;bottom:80px;
+            width:764px;height:2px;
+            background:#1a7399;box-shadow: 0 0 5px 2px rgba(26, 115, 153, 0.4);z-index:1;
         }
-
-        /* 地址框 - 适配800px容器 */
         .address-box{
-            position:absolute;
-            left: 18px;
-            bottom: 20px;
-            width: 764px; /* 原864px → 764px，适配800px容器 */
-            height: 50px;
-            z-index:2;
-            display:flex;
-            align-items:center;
+            position:absolute;left: 18px;bottom: 20px;
+            width: 764px;height: 50px;
+            z-index:2;display:flex;align-items:center;
         }
         .address-input{
-            width:100%;
-            border:none;
-            border-bottom:2px solid #f0f0f0;
-            padding:8px 5px;
-            outline:none;
-            font-size:18px;
+            width:100%;border:none;border-bottom:2px solid #f0f0f0;
+            padding:8px 5px;outline:none;font-size:22px;
         }
 
-        /* 展示模式样式 */
+        /* 展示区 —— 姓名/公司/部门 字体统一 22px */
         .show-area{width:100%;height:100%;position:relative;}
-        .show-logo{
-            position: absolute;
-            left: 18px;
-            top: 10px;
-            width: 75px;
-            height: 60px;
-            border-radius:6px;
-            overflow:hidden;
-            z-index:2;
-        }
+        .show-logo{position: absolute;left: 18px;top: 10px;width: 75px;height: 60px;border-radius:6px;overflow:hidden;z-index:2;}
         .show-logo img{width:100%;height:100%;object-fit:cover;}
-
-        /* 展示模式头像框 */
-        .show-avatar{
-            position: absolute;
-            left: 72px;
-            top: 98px;
-            width: 200px;
-            height: 230px;
-            border-radius:6px;
-            overflow:hidden;
-            z-index:2;
-        }
+        .show-avatar{position: absolute;left: 72px;top: 98px;width: 200px;height: 230px;border-radius:6px;overflow:hidden;z-index:2;}
         .show-avatar img{width:100%;height:100%;object-fit:cover;}
 
-        /* 展示区信息 - 适配800px容器 */
         .show-info{
-            position: absolute;
-            left: 315px;
-            top: 100px;
-            width: 440px; /* 原540px → 440px */
-            height: 325px;
-            z-index:2;
-            display:flex;
-            flex-direction:column;
-            gap:20px;
-            padding:10px;
+            position: absolute;left: 315px;top: 100px;
+            width: 440px;height: 325px;
+            z-index:2;display:flex;flex-direction:column;gap:20px;padding:10px;
         }
-        .show-name{font-size:30px;font-weight:bold;color:#333;}
-        .show-company{font-size:24px;color:#555;}
-        .show-job{font-size:22px;color:#666;}
-        
-        /* 电话按钮 - 边框色改为#1a7399 */
-        .show-phone-btn{
-            width:100%;
-            height:60px;
-            line-height:60px;
-            background: transparent;
-            color:#1a7399; /* 文字色同步匹配边框 */
-            border: 3px solid #1a7399; /* 核心调整：边框色改为#1a7399 */
-            box-shadow: 0 0 8px 2px rgba(26, 115, 153, 0.5); /* 阴影色匹配 */
-            border-radius:8px;
-            font-size:24px;
-            cursor:pointer;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            gap:8px;
-            margin-top:10px;
-            transition: all 0.3s ease;
-        }
-        .show-phone-btn:hover{
-            box-shadow: 0 0 12px 4px rgba(26, 115, 153, 0.7); /* hover阴影色匹配 */
-        }
-        .show-phone-btn:disabled{
-            border-color:#ccc;
-            color:#ccc;
-            box-shadow:none;
-            cursor:not-allowed;
-        }
-
-        /* 展示区二维码 - 适配800px容器 */
-        .show-qrcode{
-            position: absolute;
-            left: 674px; /* 原774px → 674px */
-            top: 375px;
-            width: 110px;
-            height: 110px;
-            border-radius:6px;
-            overflow:hidden;
-            z-index:9;
-        }
-        .show-qrcode img{width:100%;height:100%;object-fit:cover;}
-        .show-qrcode-text{
-            position:absolute;
-            top:50%;left:50%;
-            transform:translate(-50%,-50%);
-            background:#fff;
-            padding:0;
-            border-radius:2px;
-            font-size:3px;
-            font-weight:bold;
+        /* 字体全部统一 22px */
+        .show-name,.show-company,.show-job{
+            font-size:22px;
             color:#333;
-            pointer-events:none;
-            width:5px;
-            height:5px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
+            font-weight:normal;
         }
+        .show-name{font-weight:bold;}
 
-        /* 展示区分割线 - 适配800px容器 */
-        .show-divider{
-            position:absolute;
-            left:18px;
-            bottom:80px;
-            width:764px; /* 原864px → 764px */
-            height:2px;
-            background:#1a7399;
-            box-shadow: 0 0 5px 2px rgba(26, 115, 153, 0.4);
-            z-index:1;
+        /* 电话按钮边框 #1a7399 */
+        .show-phone-btn{
+            width:100%;height:60px;line-height:60px;
+            background:transparent;color:#1a7399;
+            border: 3px solid #1a7399;
+            box-shadow: 0 0 8px 2px rgba(26, 115, 153, 0.5);
+            border-radius:8px;font-size:22px;cursor:pointer;
+            display:flex;align-items:center;justify-content:center;gap:8px;
+            margin-top:10px;transition: all 0.3s ease;
         }
+        .show-phone-btn:hover{box-shadow: 0 0 12px 4px rgba(26, 115, 153, 0.7);}
+        .show-phone-btn:disabled{border-color:#ccc;color:#ccc;box-shadow:none;cursor:not-allowed;}
 
-        /* 展示区地址 - 适配800px容器 */
-        .show-address{
-            position:absolute;
-            left: 18px;
-            bottom: 20px;
-            width: 764px; /* 原864px → 764px */
-            height: 50px;
-            line-height: 50px;
-            font-size: 18px;
-            color: #666;
-            padding: 0 5px;
-            z-index:2;
-        }
+        .show-qrcode{position: absolute;left: 674px;top: 375px;width: 110px;height: 110px;border-radius:6px;overflow:hidden;z-index:9;}
+        .show-qrcode img{width:100%;height:100%;object-fit:cover;}
+        .show-qrcode-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;font-size:3px;font-weight:bold;color:#333;width:5px;height:5px;display:flex;align-items:center;justify-content:center;}
+        .show-divider{position:absolute;left:18px;bottom:80px;width:764px;height:2px;background:#1a7399;box-shadow: 0 0 5px 2px rgba(26, 115, 153, 0.4);z-index:1;}
+        .show-address{position:absolute;left: 18px;bottom: 20px;width: 764px;height: 50px;line-height: 50px;font-size:20px;color:#666;padding: 0 5px;z-index:2;}
 
-        /* 下方配置区 - 适配800px容器 */
-        .phone-set, .remark-box, .btn-row{
-            width:800px;
-            margin:0 auto 20px;
-        }
-        .phone-set{
-            padding:20px;
-            border:1px solid #eee;
-            border-radius:10px;
-            font-size:18px;
-        }
-        .check-row{
-            display:flex;align-items:center;gap:10px;margin-top:10px;font-size:18px;
-        }
+        /* 底部区域统一800px */
+        .phone-set,.remark-box,.btn-row{width:800px;margin:0 auto 20px;}
+        .phone-set{padding:20px;border:1px solid #eee;border-radius:10px;font-size:18px;}
+        .check-row{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:18px;}
         #showVirtualCheck{width:20px;height:20px;}
-        
-        .remark-input{
-            width:100%;
-            min-height:80px;
-            border-radius:8px;
-            padding:15px;
-            border:1px solid #eee;
-            outline:none;
-            font-size:18px;
-        }
-        
-        .btn-row{
-            display:flex;gap:15px;
-        }
-        .btn-call, .btn-ok, .btn-back{
-            flex:1;height:70px;border:none;border-radius:10px;color:#fff;font-size:22px;cursor:pointer;
-        }
+        .remark-input{width:100%;min-height:80px;border-radius:8px;padding:15px;border:1px solid #eee;outline:none;font-size:18px;}
+        .btn-row{display:flex;gap:15px;}
+        .btn-call,.btn-ok,.btn-back{flex:1;height:70px;border:none;border-radius:10px;color:#fff;font-size:22px;cursor:pointer;}
         .btn-call{background:#26ae60;}
-        .btn-ok{background:#5b7dff;}
+        .btn-ok{background:#1a7399;}
         .btn-back{background:#999;display:none;}
         .show-mode .btn-back{display:block;}
     </style>
 </head>
 <body>
-
-<!-- 名片主体 -->
 <div class="card-container edit-mode" id="cardContainer">
-    <!-- 编辑模式 -->
     <div class="edit-area">
-        <!-- LOGO上传 -->
         <div class="logo-box" id="logoBox">
             <img id="logoImg" alt="LOGO">
         </div>
         <input type="file" id="logoFile" accept="image/*">
 
-        <!-- 头像上传 -->
         <div class="avatar-box" id="avatarBox">
-            <img id="avatarImg" alt="一寸头像">
+            <img id="avatarImg" alt="头像">
         </div>
         <input type="file" id="avatarFile" accept="image/*">
 
-        <!-- 基础信息表单 -->
         <div class="info-side">
             <div class="row">
                 <div class="label">姓名</div>
-                <input type="text" class="input data-item" id="name" placeholder="请输入">
+                <input type="text" class="input data-item" id="name" placeholder="请输入姓名">
             </div>
             <div class="row">
                 <div class="label">公司</div>
-                <input type="text" class="input data-item" id="company" placeholder="请输入" value="勒序">
+                <input type="text" class="input data-item" id="company" value="勒序">
             </div>
             <div class="row">
-                <div class="label">职位</div>
-                <input type="text" class="input data-item" id="job" placeholder="请输入">
+                <div class="label">部门</div>
+                <input type="text" class="input data-item" id="job" placeholder="请输入部门">
             </div>
             <div class="row">
                 <div class="label">电话</div>
-                <input type="text" class="input show-phone" readonly placeholder="未设置">
+                <input type="text" class="input show-phone" readonly>
             </div>
         </div>
 
-        <!-- 二维码上传 -->
         <div class="qrcode-box" id="qrcodeBox">
-            <img id="qrcodeImg" alt="微信二维码">
+            <img id="qrcodeImg" alt="二维码">
             <div class="qrcode-center-text">chat</div>
         </div>
         <input type="file" id="qrcodeFile" accept="image/*">
 
-        <!-- 分割线 + 地址 -->
         <div class="divider"></div>
         <div class="address-box">
             <input type="text" class="address-input data-item" id="address" placeholder="请输入地址">
         </div>
     </div>
 
-    <!-- 展示模式 -->
     <div class="show-area">
-        <div class="show-logo" id="showLogo">
-            <img id="showLogoImg" alt="LOGO">
-        </div>
-        <div class="show-avatar" id="showAvatar">
-            <img id="showAvatarImg" alt="一寸头像">
-        </div>
+        <div class="show-logo" id="showLogo"><img id="showLogoImg" alt="LOGO"></div>
+        <div class="show-avatar" id="showAvatar"><img id="showAvatarImg" alt="头像"></div>
         <div class="show-info">
-            <div class="show-name" id="showName">-</div>
+            <div class="show-name" id="showName"></div>
             <div class="show-company" id="showCompany">勒序</div>
-            <div class="show-job" id="showJob">-</div>
-            <!-- 电话按钮 -->
+            <div class="show-job" id="showJob"></div>
             <button class="show-phone-btn" id="showPhoneBtn">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                 </svg>
-                <span id="showPhoneText">点击拨号</span>
+                <span id="showPhoneText">18266668888</span>
             </button>
         </div>
-        <div class="show-qrcode" id="showQrcode">
-            <img id="showQrcodeImg" alt="微信二维码">
-            <div class="show-qrcode-text">chat</div>
-        </div>
+        <div class="show-qrcode" id="showQrcode"><img id="showQrcodeImg" alt="二维码"><div class="show-qrcode-text">chat</div></div>
         <div class="show-divider"></div>
-        <div class="show-address" id="showAddress">-</div>
+        <div class="show-address" id="showAddress"></div>
     </div>
 </div>
 
-<!-- 下方配置区 -->
-<div class="card-footer">
-    <!-- 号码设置区 -->
-    <div class="phone-set" id="phoneSet">
+<div class="card-footer" id="cardFooter">
+    <div class="phone-set">
         <div class="row">
             <div class="label">真实号</div>
-            <input type="tel" class="input data-item" id="realPhone" placeholder="拨号用">
+            <input type="tel" class="input data-item" id="realPhone" value="18266668888">
         </div>
         <div class="row">
             <div class="label">虚拟号</div>
-            <input type="text" class="input data-item" id="virtualPhone" placeholder="展示用">
+            <input type="text" class="input data-item" id="virtualPhone" placeholder="展示用虚拟号码">
         </div>
         <div class="check-row">
-            <input type="checkbox" id="showVirtualCheck" class="data-item">
+            <input type="checkbox" id="showVirtualCheck">
             <label>对外显示虚拟号码</label>
         </div>
     </div>
-
-    <!-- 备注区 -->
-    <div class="remark-box" id="remarkBox">
+    <div class="remark-box">
         <textarea class="remark-input data-item" id="remark" placeholder="备注说明"></textarea>
     </div>
-
-    <!-- 按钮区 -->
-    <div class="btn-row" id="btnRow">
+    <div class="btn-row">
         <button class="btn-call" id="callBtn">电话联系</button>
         <button class="btn-ok" id="saveBtn">完成</button>
         <button class="btn-back" id="backBtn">返回编辑</button>
@@ -437,161 +243,181 @@
 </div>
 
 <script>
-// 存储/读取函数
-function saveData(key, value) {
-    sessionStorage.setItem('card_' + key, value);
-    localStorage.setItem('card_' + key, value);
+// 默认LOGO图
+const defaultLogo = "https://img0.baidu.com/it/u=1122334455,123456789&fm=253&fmt=auto&app=138&f=JPEG?w=500&h=400";
+
+// 存储 - 新增「最终状态」持久化
+function saveData(k,v){
+    localStorage.setItem('card_'+k,v);
+    sessionStorage.setItem('card_'+k,v); // 双存储确保跨会话生效
+}
+function loadData(k){
+    return localStorage.getItem('card_'+k) || sessionStorage.getItem('card_'+k) || '';
 }
 
-function loadData(key) {
-    return sessionStorage.getItem('card_' + key) || localStorage.getItem('card_' + key) || '';
-}
-
-// 通用图片上传初始化
-function initImageUpload(triggerId, fileId, previewId, showPreviewId, dataKey) {
-    const trigger = document.getElementById(triggerId);
-    const fileInput = document.getElementById(fileId);
-    const preview = document.getElementById(previewId);
-    const showPreview = document.getElementById(showPreviewId);
-
-    trigger.onclick = () => fileInput.click();
-    fileInput.onchange = e => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = ev => {
-            preview.src = ev.target.result;
-            showPreview.src = ev.target.result;
-            saveData(dataKey, ev.target.result);
-        };
-        reader.readAsDataURL(file);
-    };
-
-    // 加载存储的图片
-    const savedData = loadData(dataKey);
-    if (savedData) {
-        preview.src = savedData;
-        showPreview.src = savedData;
-    }
-}
-
-// 初始化图片上传
-initImageUpload('logoBox', 'logoFile', 'logoImg', 'showLogoImg', 'logo');
-initImageUpload('avatarBox', 'avatarFile', 'avatarImg', 'showAvatarImg', 'avatar');
-initImageUpload('qrcodeBox', 'qrcodeFile', 'qrcodeImg', 'showQrcodeImg', 'qrcode');
-
-// 号码逻辑处理
-const realPhone = document.getElementById('realPhone');
-const virtualPhone = document.getElementById('virtualPhone');
-const showVirtualCheck = document.getElementById('showVirtualCheck');
-const showPhone = document.querySelector('.show-phone');
-const showPhoneText = document.getElementById('showPhoneText');
-const showPhoneBtn = document.getElementById('showPhoneBtn');
-
-function updatePhone() {
-    const showVal = showVirtualCheck.checked ? virtualPhone.value : realPhone.value;
-    showPhone.value = showVal || '未设置';
-    showPhoneText.textContent = showVal || '点击设置号码';
-    showPhoneBtn.disabled = !realPhone.value.trim();
-    showPhoneBtn.setAttribute('data-phone', realPhone.value.trim() || '');
-}
-
-// 绑定号码输入事件
-[realPhone, virtualPhone].forEach(input => input.oninput = updatePhone);
-showVirtualCheck.onchange = updatePhone;
-
-// 表单数据处理
-const inputs = document.querySelectorAll('.data-item');
-const showElements = {
-    name: document.getElementById('showName'),
-    company: document.getElementById('showCompany'),
-    job: document.getElementById('showJob'),
-    address: document.getElementById('showAddress')
-};
-
-// 初始化表单数据
-inputs.forEach(input => {
-    const key = input.id;
-    const savedValue = loadData(key);
-    
-    if (input.type === 'checkbox') {
-        input.checked = savedValue === 'true';
-    } else {
-        // 公司字段默认值
-        input.value = key === 'company' && !savedValue ? '勒序' : savedValue;
-        if (key === 'company' && !savedValue) saveData(key, '勒序');
-    }
-
-    // 绑定输入事件
-    input.oninput = input.onchange = () => {
-        const value = input.type === 'checkbox' ? input.checked : input.value;
-        saveData(key, value);
-        updatePhone();
-        if (showElements[key]) showElements[key].textContent = value || '-';
-    };
-
-    // 初始化展示区
-    if (showElements[key]) {
-        showElements[key].textContent = key === 'company' && !savedValue ? '勒序' : (savedValue || '-');
-    }
-});
-
-// 初始化号码显示
-updatePhone();
-
-// 拨号功能
-function callRealPhone() {
-    const phone = realPhone.value.trim() || showPhoneBtn.getAttribute('data-phone');
-    if (!phone) {
-        alert('请先填写真实手机号码！');
-        return;
-    }
-    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-        location.href = `tel:${phone}`;
-    } else {
-        if (confirm(`是否拨打：${phone}？\n（桌面端可手动拨打）`)) {
-            navigator.clipboard.writeText(phone).then(() => alert(`号码已复制：${phone}`));
-        }
-    }
-}
-document.getElementById('callBtn').onclick = callRealPhone;
-showPhoneBtn.onclick = callRealPhone;
-
-// 模式切换逻辑
-const cardContainer = document.getElementById('cardContainer');
+// 初始化时校验「最终只读状态」
+const isFinalMode = loadData('isFinal') === 'true';
+const wrap = document.getElementById('cardContainer');
+const cardFooter = document.getElementById('cardFooter');
 const saveBtn = document.getElementById('saveBtn');
 const backBtn = document.getElementById('backBtn');
-let isFirstConfirm = true;
+let stage = isFinalMode ? 3 : 1; // 1:编辑 2:再次确认 3:最终只读
 
-// 切换到展示模式
-function switchToShowMode() {
-    // 更新展示区数据
-    Object.keys(showElements).forEach(key => {
-        showElements[key].textContent = document.getElementById(key).value || '-';
-    });
-    cardContainer.classList.remove('edit-mode');
-    cardContainer.classList.add('show-mode');
+// 图片上传
+function initUpload(tar,file,pre,showPre,key){
+    const t=document.getElementById(tar),f=document.getElementById(file),p=document.getElementById(pre),sp=document.getElementById(showPre);
+    t.onclick=()=>f.click();
+    f.onchange=e=>{
+        if(isFinalMode) return; // 最终状态禁止上传
+        const file=e.target.files[0];if(!file)return;
+        const r=new FileReader();
+        r.onload=ev=>{p.src=ev.target.result;sp.src=ev.target.result;saveData(key,ev.target.result);};
+        r.readAsDataURL(file);
+    };
+    let cache=loadData(key);
+    if(cache){p.src=cache;sp.src=cache;}else if(key==='logo'){p.src=defaultLogo;sp.src=defaultLogo;}
+}
+initUpload('logoBox','logoFile','logoImg','showLogoImg','logo');
+initUpload('avatarBox','avatarFile','avatarImg','showAvatarImg','avatar');
+initUpload('qrcodeBox','qrcodeFile','qrcodeImg','showQrcodeImg','qrcode');
+
+// 号码逻辑
+const realPhone=document.getElementById('realPhone');
+const virtualPhone=document.getElementById('virtualPhone');
+const showVirtualCheck=document.getElementById('showVirtualCheck');
+const showPhone=document.querySelector('.show-phone');
+const showPhoneText=document.getElementById('showPhoneText');
+const showPhoneBtn=document.getElementById('showPhoneBtn');
+
+function upPhone(){
+    let show=showVirtualCheck.checked?virtualPhone.value:realPhone.value;
+    showPhone.value=show||'未设置';
+    showPhoneText.innerText=show||'18266668888';
+    showPhoneBtn.dataset.phone=realPhone.value.trim();
+}
+[realPhone,virtualPhone].forEach(i=>{
+    i.oninput=upPhone;
+    if(isFinalMode) i.disabled = true; // 最终状态禁用输入
+});
+showVirtualCheck.onchange=upPhone;
+if(isFinalMode) showVirtualCheck.disabled = true;
+
+// 展示容器
+const showText={
+    name:document.getElementById('showName'),
+    company:document.getElementById('showCompany'),
+    job:document.getElementById('showJob'),
+    address:document.getElementById('showAddress')
+};
+const inputs=document.querySelectorAll('.data-item');
+
+// 初始化表单&展示区
+inputs.forEach(inp=>{
+    let key=inp.id;
+    let val=loadData(key);
     
-    if (isFirstConfirm) {
-        saveBtn.innerText = '再次确认';
-        isFirstConfirm = false;
-    } else {
-        saveBtn.innerText = '已完成';
-        saveBtn.disabled = true;
-        cardContainer.classList.add('final-mode');
-        document.querySelector('.card-footer').remove();
+    // 最终状态直接禁用所有输入
+    if(isFinalMode){
+        inp.disabled = true;
+        if(inp.type === 'checkbox') inp.checked = val === 'true';
+        else inp.value = val || (key==='company'?'勒序':(key==='realPhone'?'18266668888':''));
+    }else{
+        if(inp.type==='checkbox'){
+            inp.checked=val==='true';
+        }else{
+            if(key==='company'&&!val)val='勒序';
+            if(key==='realPhone'&&!val)val='18266668888';
+            inp.value=val;
+        }
+        // 非最终状态绑定输入事件
+        inp.oninput=inp.onchange=()=>{
+            let v=inp.type==='checkbox'?inp.checked:inp.value;
+            saveData(key,v);
+            upPhone();
+            if(showText[key])showText[key].innerText=v||'';
+        };
     }
+    
+    // 初始化展示区内容
+    if(showText[key]){
+        showText[key].innerText = inp.value || (key==='company'?'勒序':'');
+    }
+});
+upPhone();
+
+// 拨号功能（仅保留，最终状态仍可使用）
+function callTel(){
+    let tel=showPhoneBtn.dataset.phone;
+    if(!tel)return alert('请填写真实号码');
+    if(/Mobile|Android|iPhone/.test(navigator.userAgent))location.href=`tel:${tel}`;
+    else navigator.clipboard.writeText(tel).then(()=>alert('号码已复制'));
+}
+document.getElementById('callBtn').onclick=callTel;
+showPhoneBtn.onclick=callTel;
+
+// 刷新展示区数据
+function freshShow(){
+    showText.name.innerText=document.getElementById('name').value;
+    showText.company.innerText=document.getElementById('company').value;
+    showText.job.innerText=document.getElementById('job').value;
+    showText.address.innerText=document.getElementById('address').value;
+    upPhone();
 }
 
-// 返回编辑模式
-function switchToEditMode() {
-    cardContainer.classList.remove('show-mode');
-    cardContainer.classList.add('edit-mode');
-}
+// 模式切换核心逻辑（新增最终状态持久化）
+saveBtn.onclick=()=>{
+    if(isFinalMode) return; // 最终状态禁止点击
+    
+    freshShow();
+    if(stage===1){
+        // 第一次：进入再次确认（可修改）
+        wrap.classList.remove('edit-mode');
+        wrap.classList.add('show-mode');
+        saveBtn.innerText='再次确认';
+        stage=2;
+    }else if(stage===2){
+        // 第二次：标记为最终只读状态（持久化）
+        saveData('isFinal', 'true'); // 关键：存储最终状态
+        wrap.classList.add('final-mode');
+        wrap.classList.remove('edit-mode');
+        wrap.classList.add('show-mode');
+        cardFooter.style.display = 'none'; // 强制隐藏底部
+        saveBtn.innerText='已完成';
+        saveBtn.disabled=true;
+        backBtn.style.display = 'none'; // 隐藏返回按钮
+        
+        // 禁用所有输入/上传
+        document.querySelectorAll('input, textarea').forEach(el => el.disabled = true);
+        document.querySelectorAll('.logo-box, .avatar-box, .qrcode-box').forEach(el => {
+            el.style.pointerEvents = 'none';
+            el.style.cursor = 'default';
+        });
+        
+        stage=3;
+    }
+};
 
-// 绑定按钮事件
-saveBtn.onclick = switchToShowMode;
-backBtn.onclick = switchToEditMode;
+// 返回编辑（仅非最终状态可用）
+backBtn.onclick=()=>{
+    if(stage !== 2) return; // 仅再次确认阶段可返回
+    wrap.classList.remove('show-mode');
+    wrap.classList.add('edit-mode');
+};
+
+// 初始化时直接进入最终只读状态（分享/扫码打开时生效）
+if(isFinalMode){
+    wrap.classList.add('final-mode', 'show-mode');
+    wrap.classList.remove('edit-mode');
+    cardFooter.style.display = 'none';
+    saveBtn.disabled = true;
+    backBtn.style.display = 'none';
+    // 禁用所有交互元素
+    document.querySelectorAll('input, textarea').forEach(el => el.disabled = true);
+    document.querySelectorAll('.logo-box, .avatar-box, .qrcode-box').forEach(el => {
+        el.style.pointerEvents = 'none';
+        el.style.cursor = 'default';
+    });
+}
 </script>
 </body>
 </html>
